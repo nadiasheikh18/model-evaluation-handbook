@@ -16,8 +16,10 @@ The running example is credit-card fraud (public data, obvious stakes), but ever
 2. **[F1 & Fraud](handbook/01-f1-and-fraud.md)** — how a model can be 99.9% accurate and catch zero fraud; the confusion matrix, precision, recall, and why F1 is the "weakest-link" harmonic mean.
 3. **[AUROC](handbook/02-auroc.md)** — ranking vs. deciding, what the ROC curve really is, and why a 0.96 AUROC can still bury you in false alarms.
 4. **Calibration** — *(coming)* when "97% sure" isn't.
+5. **Three Metrics, Three Questions** — *(coming)* why you need F1, AUROC, and calibration together, and how a model can pass one while failing another.
+6. **[A Trustworthy Probability Is Still Not a Decision](handbook/05-decide.md)** — once you trust the number, what threshold do you act on, and at what cost? Youden's index, the cost ratio `p_t = 1/(1+R)`, and decision curve analysis.
 
-More planned: the three-metric comparison (capstone), decision metrics, and generalization.
+More planned: generalization.
 
 ---
 
@@ -26,7 +28,8 @@ More planned: the three-metric comparison (capstone), decision metrics, and gene
 ```
 handbook/     the chapters (Markdown) + figures
 simulator/    metrics_sim.py — a tiny, reusable metrics simulator (two knobs: prevalence, separation)
-code/         train_fraud_model.py — reproduces the real numbers from the F1/AUROC chapters
+code/         train_fraud_model.py — reproduces the F1/AUROC chapter numbers (real fraud data)
+              build_decide_experiment.py — the synthetic screening model behind the Decide chapter
 data/         how to fetch the public dataset (not committed here)
 ```
 
@@ -45,6 +48,11 @@ python code/train_fraud_model.py
 
 # 3) Play with any metric without a real model — just two knobs
 python simulator/sim_demo.py
+
+# 4) Reproduce the Decide chapter (synthetic — no download needed)
+python code/build_decide_experiment.py
+#    → threshold table (0.50 / 0.20 / Youden 0.12 / 0.10), the cost-ratio
+#      map, and the decision-curve summary; regenerates its two figures
 ```
 
 The **simulator** is the fastest way to build intuition: you don't need a trained model to study a metric's behavior, only control over *prevalence* (how rare positives are) and *separation* (how well the model separates the classes — this sets AUROC directly). Make fraud rarer and watch precision and F1 fall off a cliff while accuracy and AUROC don't flinch.
