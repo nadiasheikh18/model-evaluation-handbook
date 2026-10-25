@@ -1,6 +1,8 @@
-# A Trustworthy Probability Is Still Not a Decision
+# Your AI Model Predicts Risk. But Who Decides When to Act?
 
-*Your model predicts risk, ranks cases, and knows how sure it is. One question is still open: at what number do you act — and at what cost?*
+*How a decision threshold turns a reliable probability into an action — and why that choice is yours, not the model's.*
+
+*Also on Medium → [the essay version of this chapter](https://medium.com/@nadiasheikh18/your-ai-model-predicts-risk-but-who-decides-when-to-act-6b07eafab83f).*
 
 Every chapter so far has graded the *model*. Can it make the call (F1)? Can it rank cases by risk (AUROC)? Can you believe its confidence (calibration)? Suppose a model finally clears all three. It predicts well, it ranks well, and when it says "30%" about 30% of those cases really are positive. Here's the question none of those metrics can answer: **you now hold a trustworthy probability — what do you *do* with it?**
 
