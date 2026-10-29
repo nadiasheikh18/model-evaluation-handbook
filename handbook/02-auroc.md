@@ -62,9 +62,9 @@ Now the part that should bother you — because a 0.957 is exactly the kind of n
 
 AUROC has a blind spot, and it's the same one accuracy had: **rare events.** Because AUROC is built from *rates* — the false positive *rate* — it barely moves when your positives are scarce. Remember the simulator from last time, where we held the model fixed and just made fraud rarer:
 
-![Holding the model fixed and only lowering prevalence: accuracy and AUROC stay flat while precision and F1 collapse](figures/fig_metrics_prevalence_sweep.png)
+![Holding the model fixed and only lowering prevalence: AUROC stays flat — and accuracy stays flat too in this symmetric setup — while precision and F1 collapse](figures/fig_metrics_prevalence_sweep.png)
 
-Accuracy and AUROC sit perfectly still while precision and F1 fall off a cliff. AUROC won't even flinch as your positives vanish into the crowd — which is precisely why it can look excellent while the model is, in practice, unusable. Our 6.2% false positive rate at 88% recall *sounds* tiny — until you translate the rate into people.
+AUROC sits perfectly still while precision and F1 fall off a cliff — it won't even flinch as your positives vanish into the crowd, which is precisely why it can look excellent while the model is, in practice, unusable. (Accuracy looks flat here too, but only because this symmetric demo keeps sensitivity and specificity nearly equal; in general accuracy is `prevalence × sensitivity + (1 − prevalence) × specificity`, so it drifts as the base rate changes — usually *upward* as positives get rarer, toward the specificity — which is its own reason not to trust it under imbalance. AUROC's flatness is the robust part: it tracks the model's separating power, not the base rate.) Our 6.2% false positive rate at 88% recall *sounds* tiny — until you translate the rate into people.
 
 Picture it. You arrive Monday morning to investigate fraud, and your dashboard has **5,301 alerts** waiting. The overwhelming majority are ordinary customers who did nothing wrong. The model behind that dashboard is still, by AUROC, "excellent." Your analysts are burned out by lunch. That is what a 6.2% false positive rate *feels* like on 85,000 real transactions — the rate is small; the pile is enormous.
 
