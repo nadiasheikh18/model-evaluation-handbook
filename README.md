@@ -15,8 +15,8 @@ The running example is credit-card fraud (public data, obvious stakes), but ever
 1. **[The Evaluation Journey](handbook/00-the-evaluation-journey.md)** — why 90% accuracy doesn't mean you should trust a model, and the families of questions evaluation actually answers.
 2. **[F1 & Fraud](handbook/01-f1-and-fraud.md)** — how a model can be 99.9% accurate and catch zero fraud; the confusion matrix, precision, recall, and why F1 is the "weakest-link" harmonic mean.
 3. **[AUROC](handbook/02-auroc.md)** — ranking vs. deciding, what the ROC curve really is, and why a 0.96 AUROC can still bury you in false alarms.
-4. **Calibration** — *(coming)* when "97% sure" isn't.
-5. **Three Metrics, Three Questions** — *(coming)* why you need F1, AUROC, and calibration together, and how a model can pass one while failing another.
+4. **[Does Your AI Know When It Might Be Wrong?](handbook/03-calibration.md)** — calibration: when "97% sure" isn't. Reliability diagrams, ECE, and temperature scaling, shown on real breast-cancer data.
+5. **[Three Metrics, Three Questions](handbook/04-three-metrics.md)** — why you need F1, AUROC, and calibration together, and how a model can pass one while failing another.
 6. **[Your AI Model Predicts Risk. But Who Decides When to Act?](handbook/05-decide.md)** — once you trust the number, what threshold do you act on, and at what cost? Youden's index, the cost ratio `p_t = 1/(1+R)`, and decision curve analysis. *([essay on Medium](https://medium.com/@nadiasheikh18/your-ai-model-predicts-risk-but-who-decides-when-to-act-6b07eafab83f))*
 
 More planned: generalization.
@@ -29,6 +29,7 @@ More planned: generalization.
 handbook/     the chapters (Markdown) + figures
 simulator/    metrics_sim.py — a tiny, reusable metrics simulator (two knobs: prevalence, separation)
 code/         train_fraud_model.py — reproduces the F1/AUROC chapter numbers (real fraud data)
+              calibration_analysis_wdbc.py — the calibration chapter's numbers + figures (real breast-cancer data)
               build_decide_experiment.py — the synthetic screening model behind the Decide chapter
 data/         how to fetch the public dataset (not committed here)
 ```

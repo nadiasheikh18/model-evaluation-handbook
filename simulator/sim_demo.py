@@ -19,8 +19,13 @@ if __name__ == "__main__":
         y, s = simulate(n=100_000, prevalence=prev, separation=2.0, seed=0)
         row(f"prevalence = {prev:>6.3%}", evaluate(y, s, threshold=0.5))
 
-    print("\nNotice: accuracy and AUROC barely move, while precision and F1 fall off a cliff.")
-    print("That's the whole trap — a metric can look 'fine' while the model is unusable on rare events.\n")
+    print("\nNotice: AUROC barely moves (it tracks separation, not the base rate),")
+    print("while precision and F1 fall off a cliff.")
+    print("Accuracy barely moves here too -- but only because this symmetric setup makes")
+    print("sensitivity ~= specificity at threshold 0.5. In general accuracy =")
+    print("prevalence*sensitivity + (1-prevalence)*specificity, so it DOES drift with")
+    print("prevalence (upward, toward specificity, as positives get rarer).")
+    print("Either way: a metric can look 'fine' while the model is unusable on rare events.\n")
 
     print("Now hold prevalence at 1% and improve the model (raise separation):\n")
     for sep in (1.0, 2.0, 3.0):
