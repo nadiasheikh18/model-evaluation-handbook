@@ -1,7 +1,8 @@
 """
 Decide (#6) — synthetic screening experiment, reproducible.
 Generates the data (fixed seed), saves decide_data.npz, prints the full stats
-table, and regenerates decide_thresholds.png and decide_curve.png from that data.
+table, and regenerates fig_decide_thresholds.png and fig_decide_curve.png into
+handbook/figures/ (paths resolved to the repo root, so it works from any cwd).
 
 Target setup: 4,000 patients, ~12% prevalence, AUROC ~0.84, probabilities
 calibrated by construction (p is the exact Bayes posterior of the generative model).
@@ -12,6 +13,13 @@ from sklearn.metrics import roc_auc_score
 import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib import font_manager as fm
+
+# resolve output paths to the repo root so figures land in handbook/figures/
+# regardless of the current working directory (fixes 'writes to cwd').
+HERE   = os.path.dirname(os.path.abspath(__file__))
+REPO   = os.path.dirname(HERE)
+FIGDIR = os.path.join(REPO, "handbook", "figures")
+os.makedirs(FIGDIR, exist_ok=True)
 
 SEED = 20260423
 N    = 4000
@@ -47,7 +55,7 @@ spec_arr = np.array([stats(t)["spec"] for t in ts])
 J = sens_arr + spec_arr - 1
 t_y = float(ts[np.argmax(J)])
 
-np.savez("decide_data.npz", y=y, p=p, prev=prev, auc=auc)
+np.savez(os.path.join(FIGDIR, "decide_data.npz"), y=y, p=p, prev=prev, auc=auc)
 
 print("="*64)
 print(f"N={N}  prevalence={prev*100:.1f}%  ({n_pos} cases)  AUROC={auc:.3f}")
@@ -87,12 +95,14 @@ else:
 print("="*64)
 
 # ---------------- figures (house style) ----------------
+# Font loading with a graceful fallback (same pattern as calibration_analysis_wdbc.py):
+# if the Inter fonts are not installed, fall back to matplotlib defaults instead of crashing.
 FD="/usr/share/fonts/opentype/inter/"
 for fn in ["Inter-Regular.otf","Inter-Medium.otf","Inter-SemiBold.otf","Inter-Bold.otf","Inter-ExtraBold.otf"]:
     if os.path.exists(FD+fn): fm.fontManager.addfont(FD+fn)
-Rf=fm.FontProperties(fname=FD+"Inter-Regular.otf");Mf=fm.FontProperties(fname=FD+"Inter-Medium.otf")
-SBf=fm.FontProperties(fname=FD+"Inter-SemiBold.otf");Bf=fm.FontProperties(fname=FD+"Inter-Bold.otf")
-XBf=fm.FontProperties(fname=FD+"Inter-ExtraBold.otf")
+def _f(n): return fm.FontProperties(fname=FD+n) if os.path.exists(FD+n) else fm.FontProperties()
+Rf=_f("Inter-Regular.otf");Mf=_f("Inter-Medium.otf");SBf=_f("Inter-SemiBold.otf")
+Bf=_f("Inter-Bold.otf");XBf=_f("Inter-ExtraBold.otf")
 NAVY="#12285A";TEAL="#22B2A0";VIOLET="#8E7DEC";MUTED="#5A6472";GRID="#E7E0CE"
 WHITE="#FFFFFF";TEAL_DK="#0E7C6F";VIOLET_DK="#6C4FD0";RED="#C64B4B";PAPER="#F4EEE2"
 
@@ -120,7 +130,7 @@ fig.text(0.055,0.955,"One model, three thresholds — the cutoff is the decision
 fig.text(0.965,0.028,f"synthetic screening model · prevalence {prev*100:.0f}% · AUROC {auc:.2f} · gobeyondaccuracy.com",
          ha="right",fontproperties=Mf,fontsize=8,color=MUTED)
 plt.subplots_adjust(left=0.10,right=0.965,top=0.86,bottom=0.16)
-fig.savefig("decide_thresholds.png",facecolor=PAPER,dpi=170); plt.close(fig)
+fig.savefig(os.path.join(FIGDIR,"fig_decide_thresholds.png"),facecolor=PAPER,dpi=170); plt.close(fig)
 
 # FIG B: decision curve
 fig,ax=plt.subplots(figsize=(8,5.0),dpi=170); fig.patch.set_facecolor(PAPER); ax.set_facecolor(WHITE)
@@ -145,5 +155,5 @@ ax.tick_params(labelsize=9); ax.grid(True,color=GRID,lw=0.8)
 [ax.spines[s].set_visible(False) for s in ["top","right"]]; [ax.spines[s].set_color(GRID) for s in ["left","bottom"]]
 fig.text(0.965,0.028,"Decision Curve Analysis (Vickers & Elkin, 2006) · gobeyondaccuracy.com",ha="right",fontproperties=Mf,fontsize=8,color=MUTED)
 plt.subplots_adjust(left=0.10,right=0.965,top=0.99,bottom=0.16)
-fig.savefig("decide_curve.png",facecolor=PAPER,dpi=170); plt.close(fig)
-print("wrote decide_data.npz, decide_thresholds.png, decide_curve.png")
+fig.savefig(os.path.join(FIGDIR,"fig_decide_curve.png"),facecolor=PAPER,dpi=170); plt.close(fig)
+print(f"wrote to {FIGDIR}:  fig_decide_thresholds.png, fig_decide_curve.png, decide_data.npz")
