@@ -23,7 +23,11 @@ from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
-from sklearn.model_selection import cross_val_predict, StratifiedKFold
+from sklearn.model_selection import cross_val_predict, StratifiedKFold, train_test_split
+from sklearn.metrics import brier_score_loss
+import os
+HERE = os.path.dirname(os.path.abspath(__file__)); REPO = os.path.dirname(HERE)
+FIGDIR = os.path.join(REPO, "handbook", "figures"); os.makedirs(FIGDIR, exist_ok=True)
 
 SEED = 0            # all randomness
 N_BINS = 10         # calibration bins on [0.5, 1.0] (top-label confidence)
@@ -70,15 +74,18 @@ def summary(p):
         err_rate_hi  = wrong[hi].mean()*100 if hi.sum() else 0.0,       # among high-conf preds, share WRONG
         acc_hi       = corr[hi].mean()*100 if hi.sum() else 0.0,        # accuracy in the high-conf region
         meanconf_hi  = conf[hi].mean()*100 if hi.sum() else 0.0,        # stated confidence there
+        brier        = brier_score_loss(y, p),                          # proper scoring rule
+        logloss      = float(-(y*np.log(np.clip(p,1e-9,1-1e-9)) + (1-y)*np.log(np.clip(1-p,1e-9,1-1e-9))).mean()),
     )
 
 models = [("LogReg", p_log), ("MLP", p_mlp), ("GaussianNB", p_gnb)]
 S = {nm: summary(p) for nm, p in models}
-print("\nmodel        acc   ECE   meanconf  %preds>.8  %errs>.8  errRate>.8  acc>.8  conf>.8")
+print("\nmodel        acc   ECE   meanconf  %preds>.8  %errs>.8  errRate>.8  acc>.8  conf>.8   Brier  LogLoss")
 for nm, _ in models:
     s = S[nm]
     print(f"{nm:11s} {s['acc']:4.0f}% {s['ece']:.3f}   {s['meanconf']:4.0f}%     {s['frac_hi']:4.0f}%     "
-          f"{s['share_err_hi']:4.0f}%     {s['err_rate_hi']:4.0f}%     {s['acc_hi']:4.0f}%  {s['meanconf_hi']:4.0f}%")
+          f"{s['share_err_hi']:4.0f}%     {s['err_rate_hi']:4.0f}%     {s['acc_hi']:4.0f}%  {s['meanconf_hi']:4.0f}%   "
+          f"{s['brier']:.3f}  {s['logloss']:.3f}")
 
 # honest = lowest ECE, overconfident = highest ECE
 honest_nm  = min(S, key=lambda k: S[k]['ece'])
@@ -100,8 +107,25 @@ p_temp = 1/(1+np.exp(-z/Tb))
 ece_before = ece(over_p[tst], y[tst]); ece_after = ece(p_temp[tst], y[tst])
 acc_before = ((over_p[tst] >= 0.5).astype(int) == y[tst]).mean()*100
 acc_after  = ((p_temp[tst]  >= 0.5).astype(int) == y[tst]).mean()*100
+br_before = brier_score_loss(y[tst], over_p[tst]); br_after = brier_score_loss(y[tst], p_temp[tst])
 print(f"\ntemperature scaling on {over_nm}:  T={Tb:.2f}  (fit on calibration half, reported on held-out test half)")
-print(f"   test-half ECE  {ece_before:.3f} -> {ece_after:.3f}   test-half accuracy {acc_before:.0f}% -> {acc_after:.0f}% (unchanged)")
+print(f"   test-half ECE  {ece_before:.3f} -> {ece_after:.3f}   test-half Brier {br_before:.3f} -> {br_after:.3f}   accuracy {acc_before:.0f}% -> {acc_after:.0f}% (unchanged)")
+
+# ---- strictly-nested cross-check (review #5): a single train -> calibrate -> test split ----
+# The OOF numbers above use ALL the data (stable, but the calib/test halves share base-model fits).
+# This is the fully-nested protocol: the base model is trained ONLY on the train split, the temperature
+# is fit on a disjoint calibration split, and ECE/Brier are reported on a third untouched test split.
+# Far fewer rows -> noisier, so it is a cross-check that confirms the direction, not the headline number.
+Xtr3, Xtmp3, ytr3, ytmp3 = train_test_split(Xs, y, test_size=0.40, stratify=y, random_state=SEED)
+Xcal3, Xte3, ycal3, yte3 = train_test_split(Xtmp3, ytmp3, test_size=0.50, stratify=ytmp3, random_state=SEED)
+base3 = make_pipeline(StandardScaler(), MLPClassifier(hidden_layer_sizes=(64,32), max_iter=1500, random_state=SEED)).fit(Xtr3, ytr3)
+pcal3 = base3.predict_proba(Xcal3)[:, 1]; pte3 = base3.predict_proba(Xte3)[:, 1]
+zc3, zt3 = logit(pcal3), logit(pte3)
+def _nll3(T): q = np.clip(1/(1+np.exp(-zc3/T)), 1e-9, 1-1e-9); return -(ycal3*np.log(q) + (1-ycal3)*np.log(1-q)).mean()
+T3 = Ts[np.argmin([_nll3(T) for T in Ts])]
+pte3_t = 1/(1+np.exp(-zt3/T3))
+print(f"\nstrictly-nested cross-check — train {len(ytr3)} -> calib {len(ycal3)} -> test {len(yte3)} (base trained only on train):")
+print(f"   MLP test ECE {ece(pte3, yte3):.3f} -> {ece(pte3_t, yte3):.3f}   Brier {brier_score_loss(yte3, pte3):.3f} -> {brier_score_loss(yte3, pte3_t):.3f}   (T={T3:.2f}; only ~{len(yte3)} test patients, so noisier)")
 
 # ---------------- figures (house style) ----------------
 import os, matplotlib; matplotlib.use("Agg")
@@ -144,7 +168,7 @@ ax.annotate("in the high-confidence range,\nsits below the line",xy=(xo[-1],yo[-
 fig.text(0.055,0.955,"Two models, same task — their stated confidence lines up with reality differently",fontproperties=XBf,fontsize=12,color=NAVY)
 fig.text(0.965,0.028,"real breast-cancer data (WDBC, 569 patients, out-of-fold) · gobeyondaccuracy.com",ha="right",fontproperties=Mf,fontsize=8,color=MUTED)
 plt.subplots_adjust(left=0.10,right=0.965,top=0.88,bottom=0.15)
-fig.savefig("fig_calibration_reliability.png",facecolor=PAPER,dpi=170); plt.close(fig)
+fig.savefig(os.path.join(FIGDIR,"fig_calibration_reliability.png"),facecolor=PAPER,dpi=170); plt.close(fig)
 
 # FIG B: left = accuracy; right = high-confidence region, stated confidence vs actual accuracy
 fig,(axL,axR)=plt.subplots(1,2,figsize=(10.4,5.0),dpi=170); fig.patch.set_facecolor(PAPER)
@@ -174,5 +198,5 @@ axR.set_title("…overstates its confidence where it's most sure",fontproperties
 fig.text(0.5,0.028,"Accuracy and calibration are different axes. Right panel (leakage-free): within each model's own >80%-confidence predictions, stated confidence vs. delivered accuracy.",
          ha="center",fontproperties=Mf,fontsize=8.5,color=MUTED)
 plt.subplots_adjust(left=0.075,right=0.975,top=0.86,bottom=0.17,wspace=0.24)
-fig.savefig("fig_calibration_overconfidence.png",facecolor=PAPER,dpi=170); plt.close(fig)
-print("\nwrote fig_calibration_reliability.png, fig_calibration_overconfidence.png")
+fig.savefig(os.path.join(FIGDIR,"fig_calibration_overconfidence.png"),facecolor=PAPER,dpi=170); plt.close(fig)
+print(f"\nwrote to {FIGDIR}: fig_calibration_reliability.png, fig_calibration_overconfidence.png")

@@ -1,10 +1,10 @@
 # The Model Evaluation Handbook
 
-**Understanding how we actually know whether an ML model can be trusted — one metric at a time, with real data, plain language, and runnable code.**
+**Understanding how we actually know whether an ML model can be trusted — one metric at a time, with real and synthetic data, plain language, and runnable code.**
 
 Part of **[Beyond Accuracy](https://medium.com/@nadiasheikh18)** by Nadia Sheikh. *Question assumptions. Build intuition.*
 
-Most model-evaluation writing is either a wall of formulas or a vague blog post. This handbook is the middle path: each chapter takes one metric, builds the *intuition* from a question someone was actually forced to answer, proves it on a **real dataset**, and hands you the **code and a simulator** so you can watch the metric move yourself.
+Most model-evaluation writing is either a wall of formulas or a vague blog post. This handbook is the middle path: each chapter takes one metric, builds the *intuition* from a question someone was actually forced to answer, demonstrates it on **real or controlled synthetic data**, and hands you the **code and a simulator** so you can watch the metric move yourself.
 
 The running example is credit-card fraud (public data, obvious stakes), but every idea is portable — relabel "fraud" as disease, defect, or churn and the math is identical. The clinical mirror is called out throughout.
 
@@ -27,7 +27,7 @@ More planned: generalization.
 
 ```
 handbook/     the chapters (Markdown) + figures
-simulator/    metrics_sim.py — a tiny, reusable metrics simulator (two knobs: prevalence, separation)
+simulator/    a small Python metric simulator (CLI) — metrics_sim.py + sim_demo.py; set prevalence/separation/threshold, reports F1/AUROC/AP/ECE/Brier
 code/         train_fraud_model.py — reproduces the F1/AUROC chapter numbers (real fraud data)
               calibration_analysis_wdbc.py — the calibration chapter's numbers + figures (real breast-cancer data)
               build_decide_experiment.py — the synthetic screening model behind the Decide chapter
@@ -44,11 +44,14 @@ pip install -r requirements.txt
 
 # 2) Reproduce the real numbers from the chapters
 python code/train_fraud_model.py
-#    → confusion matrix (91 / 16 / 57 / 85,279), precision/recall/F1,
-#      AUROC ≈ 0.957, PR-AUC ≈ 0.71, and saves the ROC figure
+#    → reproduces the chapter numbers on the random split (91 / 16 / 57 / 85,279,
+#      AUROC ≈ 0.957, AP ≈ 0.71) AND a chronological-split operational estimate;
+#      regenerates fig_f1_confusion_matrix.png + fig_auroc_roc_curve.png
 
-# 3) Play with any metric without a real model — just two knobs
-python simulator/sim_demo.py
+# 3) Play with any metric without a real model (prevalence / separation / threshold)
+python simulator/sim_demo.py                          # guided sweeps
+python simulator/sim_demo.py --prevalence 0.01 --separation 2.0
+python simulator/sim_demo.py --calibration            # ranking vs. calibration
 
 # 4) Reproduce the Decide chapter (synthetic — no download needed)
 python code/build_decide_experiment.py
@@ -56,11 +59,11 @@ python code/build_decide_experiment.py
 #      map, and the decision-curve summary; regenerates its two figures
 ```
 
-The **simulator** is the fastest way to build intuition: you don't need a trained model to study a metric's behavior, only control over *prevalence* (how rare positives are) and *separation* (how well the model separates the classes — this sets AUROC directly). Make fraud rarer and watch precision and F1 fall off a cliff while accuracy and AUROC don't flinch.
+The **simulator** is the fastest way to build intuition: you don't need a trained model to study a metric, only control over *prevalence* (how rare positives are), *separation* (how well the model separates the classes — this sets AUROC directly), and a threshold. Set them on the command line (`--prevalence --separation --threshold --seed`), or run `--calibration` to watch a monotonic re-mapping leave AUROC untouched while ECE, Brier, and F1 all move. Make fraud rarer and watch precision and F1 fall off a cliff while **AUROC** doesn't flinch — and accuracy barely moves, but only because of this demo's symmetric setup; in general accuracy drifts with prevalence.
 
 ## How this is written
 
-Every chapter follows one rule: **if you can't explain it simply, you don't yet understand it.** Plain language first; the moment we'd reach for jargon is the moment we stop and explain. Formulas live in the references, not the prose — e.g., the AUROC = Wilcoxon/Mann–Whitney result is linked, not derived on the page.
+Every chapter follows one rule: **if you can't explain it simply, you don't yet understand it.** Plain language first; the moment we'd reach for jargon is the moment we stop and explain. We keep the heavy derivations in the references rather than the prose — e.g., the AUROC = Wilcoxon/Mann–Whitney result is linked, not re-derived on the page — though a compact formula appears inline where it earns its place (like the cost-ratio rule `p_t = 1/(1+R)`).
 
 ## License
 

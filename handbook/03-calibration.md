@@ -116,7 +116,7 @@ python code/calibration_analysis_wdbc.py
 #    of the out-of-fold predictions and reports ECE on the held-out half; saves both figures.
 ```
 
-The controls that make the numbers honest: probabilities are out-of-fold (`cross_val_predict` over a fixed-seed `StratifiedKFold`, with the scaler and model inside a `Pipeline` so preprocessing is fit per training fold, never on the row being scored); the temperature is fit and evaluated on disjoint halves; and the seed, bin count, and confidence threshold are fixed constants at the top of the file, so the printed values are the values quoted here.
+The controls that make the numbers honest: probabilities are out-of-fold (`cross_val_predict` over a fixed-seed `StratifiedKFold`, with the scaler and model inside a `Pipeline` so preprocessing is fit per training fold, never on the row being scored); the temperature is fit and evaluated on disjoint halves; and the seed, bin count, and confidence threshold are fixed constants at the top of the file, so the printed values are the values quoted here. The script also reports **Brier score and log loss** beside ECE, and runs a strictly-nested **train → calibrate → test** cross-check (a base model trained only on the train split, the temperature fit on a disjoint calibration split, ECE reported on a third untouched test split) that reproduces the same recalibration improvement on fewer, noisier patients.
 
 ---
 
