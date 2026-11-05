@@ -19,7 +19,9 @@ from matplotlib import font_manager as fm
 HERE   = os.path.dirname(os.path.abspath(__file__))
 REPO   = os.path.dirname(HERE)
 FIGDIR = os.path.join(REPO, "handbook", "figures")
+OUTDIR = os.path.join(REPO, "outputs")          # generated data artifacts (gitignored)
 os.makedirs(FIGDIR, exist_ok=True)
+os.makedirs(OUTDIR, exist_ok=True)
 
 SEED = 20260423
 N    = 4000
@@ -55,7 +57,7 @@ spec_arr = np.array([stats(t)["spec"] for t in ts])
 J = sens_arr + spec_arr - 1
 t_y = float(ts[np.argmax(J)])
 
-np.savez(os.path.join(FIGDIR, "decide_data.npz"), y=y, p=p, prev=prev, auc=auc)
+np.savez(os.path.join(OUTDIR, "decide_data.npz"), y=y, p=p, prev=prev, auc=auc)
 
 print("="*64)
 print(f"N={N}  prevalence={prev*100:.1f}%  ({n_pos} cases)  AUROC={auc:.3f}")
@@ -156,4 +158,4 @@ ax.tick_params(labelsize=9); ax.grid(True,color=GRID,lw=0.8)
 fig.text(0.965,0.028,"Decision Curve Analysis (Vickers & Elkin, 2006) · gobeyondaccuracy.com",ha="right",fontproperties=Mf,fontsize=8,color=MUTED)
 plt.subplots_adjust(left=0.10,right=0.965,top=0.99,bottom=0.16)
 fig.savefig(os.path.join(FIGDIR,"fig_decide_curve.png"),facecolor=PAPER,dpi=170); plt.close(fig)
-print(f"wrote to {FIGDIR}:  fig_decide_thresholds.png, fig_decide_curve.png, decide_data.npz")
+print(f"wrote figures to {FIGDIR}; decide_data.npz to {OUTDIR}")

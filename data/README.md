@@ -16,6 +16,28 @@ data/creditcard.csv
 
 That's it — `code/train_fraud_model.py` reads from that path.
 
+## Verify your download
+
+The scripts expect this exact file. After downloading, confirm it matches:
+
+| Property | Expected value |
+|---|---|
+| Filename | `creditcard.csv` |
+| Size | `150,828,752` bytes |
+| SHA-256 | `76274b691b16a6c49d3f159c883398e03ccd6d1ee12d9d8ee38f4b4b98551a89` |
+| Rows | 284,807 transactions (+ 1 header row) |
+| Positives | 492 fraud (`Class == 1`), a 0.173% base rate |
+| Columns (31) | `Time`, `V1`–`V28`, `Amount`, `Class` |
+
+```bash
+# from the repo root
+test "$(wc -c < data/creditcard.csv)" = 150828752 && echo "size OK"
+shasum -a 256 data/creditcard.csv   # compare to the SHA-256 above (use sha256sum on Linux)
+head -1 data/creditcard.csv         # header: "Time","V1",...,"V28","Amount","Class"
+```
+
+If the size or checksum differs, you have a different revision of the dataset and the chapter numbers may not reproduce exactly.
+
 ### Optional: Kaggle CLI
 
 ```bash

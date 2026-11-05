@@ -18,3 +18,4 @@ Thumbs.db
 # generated outputs
 outputs/
 *.tmp
+*.npz

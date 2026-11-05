@@ -1,0 +1,51 @@
+name: CI
+
+# Runs the data-free scripts and the unit tests on Linux and macOS so every
+# empirical claim that does NOT need the gated dataset is checked on each push.
+# The fraud script (code/train_fraud_model.py) is intentionally excluded: it
+# needs the ULB creditcard.csv (~144 MB, over GitHub's 100 MB/file limit, and
+# license-gated), so it cannot run in CI. See data/README.md and RESULTS_MANIFEST.md.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    env:
+      MPLBACKEND: Agg          # headless matplotlib
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: '.python-version'
+
+      - name: Install the verified (locked) environment
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-lock.txt
+
+      - name: Unit tests (metric helpers)
+        run: pytest -q
+
+      - name: Simulator — guided sweeps
+        run: python simulator/sim_demo.py
+
+      - name: Simulator — ranking vs calibration demo
+        run: python simulator/sim_demo.py --calibration
+
+      - name: Calibration chapter (WDBC, bundled in scikit-learn)
+        run: python code/calibration_analysis_wdbc.py
+
+      - name: Decide chapter (synthetic, fixed seed)
+        run: python code/build_decide_experiment.py

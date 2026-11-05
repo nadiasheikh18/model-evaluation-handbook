@@ -1,0 +1,13 @@
+# Exact environment the handbook's numbers were last verified against
+# (Python 3.13; see .python-version). CI installs this file so the scripts
+# run against a known-good set. requirements.txt holds the looser *supported
+# floor*; this file is the pinned ceiling that reproduces the committed numbers
+# (notably the MLP calibration figures, which can drift across scikit-learn
+# releases). Regenerate after a deliberate upgrade: pip freeze > requirements-lock.txt
+numpy==2.5.3
+pandas==3.0.5
+scikit-learn==1.9.1
+matplotlib==3.11.2
+
+# test / CI only
+pytest==9.1.1

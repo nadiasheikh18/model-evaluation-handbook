@@ -68,7 +68,7 @@ AUROC sits perfectly still while precision and F1 fall off a cliff — it won't 
 
 Picture it. You arrive Monday morning to investigate fraud, and your dashboard has **5,301 alerts** waiting. The overwhelming majority are ordinary customers who did nothing wrong. The model behind that dashboard is still, by AUROC, "excellent." Your analysts are burned out by lunch. That is what a 6.2% false positive rate *feels* like on 85,000 real transactions — the rate is small; the pile is enormous.
 
-There's an honest companion number that doesn't let you get away with this: the **precision-recall curve** and its area — **average precision (AP)**, loosely called PR-AUC — which on this same model is a far more sobering **0.71**. Under heavy imbalance, PR-AUC tells you what AUROC politely won't ([Saito & Rehmsmeier, 2015](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0118432)). The rule: **when the positive class is rare, report AUROC *and* average precision (PR-AUC), and never quote a false positive rate without translating it into a raw count.**
+There's an honest companion number that doesn't let you get away with this: the **precision-recall curve**, summarized by its **Average Precision (AP)** — the mean precision across recall levels, closely related to (and often reported as) the area under the PR curve — which on this same model is a far more sobering **0.71**. Under heavy imbalance, AP tells you what AUROC politely won't ([Saito & Rehmsmeier, 2015](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0118432)). The rule: **when the positive class is rare, report AUROC *and* **Average Precision (AP)**, and never quote a false positive rate without translating it into a raw count.**
 
 ## The next question
 

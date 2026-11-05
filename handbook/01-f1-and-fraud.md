@@ -22,6 +22,8 @@ That 2×2 is the **confusion matrix**, and it's worth learning once, because alm
 
 Ninety-one caught, sixteen false alarms, fifty-seven missed, 85,279 correctly cleared. Accuracy: **99.91%** — because that giant TN dwarfs everything, while the story that matters hides in the other three cells.
 
+*One caveat on that split, since this piece is partly about leakage: the 70/30 here is a **random** split — fine for illustrating the metrics, but a random split on time-ordered transactions lets the model glimpse the future. Use a **chronological** split instead — train on earlier transactions, test on later ones — and recall at this threshold falls from 0.615 to about 0.49. Part of that drop is the leakage this chapter warns about below; part is the fraud rate and transaction mix genuinely shifting over the data's two days. The metric is computed correctly either way — the question is what the split is quietly telling the model.*
+
 ## The metrics no one invented — they were forced into existence
 
 Here's the shift that makes these numbers stick. **Every evaluation metric exists because someone had to answer a practical question.**
@@ -71,7 +73,7 @@ Reading about a collapse isn't the same as seeing one. So I built a tiny simulat
 
 ![Same model, only prevalence changes: accuracy and AUROC stay flat while precision and F1 collapse](figures/fig_metrics_prevalence_sweep.png)
 
-Accuracy and AUROC sit perfectly still while precision and F1 fall off a cliff. Same model — only the base rate changed. Relabel "fraud" as disease, defect, or churn and nothing changes but the caption. *(I'll open-source the simulator alongside a later piece in the series, so you can run this yourself.)*
+Accuracy and AUROC sit nearly still while precision and F1 fall off a cliff. Same model — only the base rate changed. (AUROC’s flatness is the robust part: it tracks the model’s separating power, not the base rate. Accuracy only looks flat because this symmetric demo keeps sensitivity and specificity close; in general accuracy *does* drift with prevalence — usually upward as positives get rarer, toward the specificity — which is its own reason not to lean on it under imbalance.) Relabel "fraud" as disease, defect, or churn and nothing changes but the caption. *(I'll open-source the simulator alongside a later piece in the series, so you can run this yourself.)*
 
 ## What F1 still can't tell you
 

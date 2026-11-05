@@ -16,8 +16,9 @@ IMPORTANT — two splits, on purpose:
   * RANDOM stratified split  = the chapter's *illustrative* numbers. A random split on
     time-ordered transactions leaks future information, so these are a teaching benchmark,
     NOT an operational estimate (the chapter itself warns about this; see ch.1).
-  * CHRONOLOGICAL split on Time = the honest operational estimate (train on the past,
-    test on the future). Recall at 0.5 drops (~0.615 -> ~0.49): the leak, made visible.
+  * CHRONOLOGICAL split on Time = a temporal-holdout estimate that better reflects
+    deployment (train on the past, test on the future). Recall at 0.5 drops (~0.615 ->
+    ~0.49): partly the leak, partly real prevalence/distribution shift over time.
 
 Figures (house style, written to handbook/figures/):
   fig_f1_confusion_matrix.png , fig_auroc_roc_curve.png
@@ -106,16 +107,16 @@ def main():
         ops.append((tpr[i], fpc, thr[i]))
         print(f"     recall ~{tpr[i]*100:4.1f}%  ->  {fpc:>5} false alarms  (threshold {thr[i]:.4g})")
 
-    # ===================== CHRONOLOGICAL split — the HONEST operational estimate =====================
+    # ===================== CHRONOLOGICAL split — temporal-holdout estimate =====================
     print("\n" + "="*78)
-    print("CHRONOLOGICAL split on Time (first 70% train / last 30% test) — operational estimate")
+    print("CHRONOLOGICAL split on Time (first 70% train / last 30% test) — temporal-holdout estimate")
     print("="*78)
     order = np.argsort(df["Time"].values, kind="mergesort"); cut = int(0.70 * len(order))
     tr, te = order[:cut], order[cut:]
     print(f"  test set: {len(te):,} transactions, {int(y[te].sum())} fraud (fraud is not uniform over time)\n")
     s_chrono = fit(X[tr], X[te], y[tr], y[te], seed=a.seed)
     chrono = report(y[te], s_chrono, "PLAIN (chronological)")
-    print("  -> recall at 0.5 drops vs the random split: the future-leak the chapter warns about, made visible.")
+    print("  -> recall at 0.5 drops vs the random split: partly temporal leakage, partly real prevalence/distribution shift over time.")
 
     # ===================== figures (house style, graceful font fallback) =====================
     import matplotlib; matplotlib.use("Agg")

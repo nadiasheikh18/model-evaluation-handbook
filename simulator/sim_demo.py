@@ -62,8 +62,9 @@ def calibration(prev, sep, thr, n, seed):
         print(f"  {name:<20} {r['AUROC']:>7.3f} {r['ECE']:>7.3f} {r['Brier']:>7.3f} "
               f"{r['f1']:>8.3f} {r['precision']:>10.3f} {r['recall']:>8.3f}")
     print("\nAUROC is IDENTICAL across all three — a monotonic remap can't change the ranking.")
-    print("But ECE, Brier, and the F1 at a fixed threshold all move: a model can rank perfectly")
-    print("and still be badly calibrated. Ranking quality and probability quality are different")
+    print("But ECE, Brier, and the F1 at a fixed threshold all move: a model can rank well —")
+    print("all three remaps here rank IDENTICALLY — and still be badly calibrated. Ranking quality")
+    print("and probability quality are different")
     print("questions, which is why you measure both.")
 
 if __name__ == "__main__":
